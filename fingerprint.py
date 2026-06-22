@@ -55,7 +55,7 @@ def plot_spectrogram(song_path, window_size=20000, max_freq=3500, output_file=No
 
     plt.figure(figsize=(12, 5))
 
-    plt.specgram(
+    Pxx, freqs, bins, im = plt.specgram(
         signal,
         NFFT=window_size,
         Fs=sr,
@@ -63,12 +63,15 @@ def plot_spectrogram(song_path, window_size=20000, max_freq=3500, output_file=No
         cmap="magma"
     )
 
+    im.set_clim(-100, 0)
+
     plt.ylim(0, max_freq)
 
     plt.xlabel("Time (s)")
     plt.ylabel("Frequency (Hz)")
     plt.title(f"Spectrogram of {song_name}\nWindow Size = {window_size}")
-    plt.colorbar(label="Intensity (dB)")
+    plt.colorbar(im, label="Intensity (dB)")
+    # plt.colorbar(label="Intensity (dB)")
     plt.tight_layout()
 
     if output_file:
@@ -80,7 +83,7 @@ def plot_spectrogram(song_path, window_size=20000, max_freq=3500, output_file=No
     plt.close()
 
 
-def plot_fingerprint(song_path, window_size=20000, max_freq=3500, neighborhood_size=15, min_db=-40, output_file=None):
+def plot_fingerprint(song_path, window_size=20000, max_freq=3500, neighborhood_size=10, min_db=-50, output_file=None):
 
     print("Generating fingerprint...")
 
@@ -120,7 +123,9 @@ def plot_fingerprint(song_path, window_size=20000, max_freq=3500, neighborhood_s
         origin="lower",
         aspect="auto",
         extent=[times[0], times[-1], frequencies[0], frequencies[-1]],
-        cmap="magma"
+        cmap="magma",
+        vmin=-100,
+        vmax=0
     )
 
     plt.scatter(
@@ -145,6 +150,92 @@ def plot_fingerprint(song_path, window_size=20000, max_freq=3500, neighborhood_s
         plt.show()
 
     plt.close()
+
+
+def generate_fingerprint(song_path, window_size=2048, max_freq=3500, neighborhood_size=15, min_db=-40):
+
+    signal_data, sr = librosa.load(song_path, sr=None, mono=True)
+
+    frequencies, times, Sxx = signal.spectrogram(
+        signal_data,
+        fs=sr,
+        nperseg=window_size,
+        noverlap=window_size // 2,
+        mode="magnitude"
+    )
+
+    Sxx_db = 20 * np.log10(Sxx + 1e-10)
+
+    mask = frequencies <= max_freq
+    frequencies = frequencies[mask]
+    Sxx_db = Sxx_db[mask]
+
+    local_max = maximum_filter(
+        Sxx_db,
+        size=neighborhood_size
+    )
+
+    peaks = (
+        (Sxx_db == local_max) &
+        (Sxx_db > min_db)
+    )
+
+    y, x = np.where(peaks)
+
+    peak_list = []
+
+    for yi, xi in zip(y, x):
+        peak_list.append(
+            (
+                frequencies[yi],
+                times[xi]
+            )
+        )
+
+    return peak_list
+
+
+def generate_hashes(peaks, fan_value=5, max_time_delta=5.0):
+
+    hashes = []
+
+    peaks.sort(key=lambda p: p[1])
+
+    for i in range(len(peaks)):
+
+        anchor_freq, anchor_time = peaks[i]
+
+        paired = 0
+
+        for j in range(i + 1, len(peaks)):
+
+            target_freq, target_time = peaks[j]
+
+            dt = target_time - anchor_time
+
+            if dt > max_time_delta:
+                break
+
+            hash_value = (
+                f"{int(anchor_freq)}-"
+                f"{int(target_freq)}-"
+                f"{int(dt * 1000)}"
+            )
+
+            hashes.append(
+                (
+                    hash_value,
+                    anchor_time
+                )
+            )
+
+            paired += 1
+
+            if paired >= fan_value:
+                break
+
+    return hashes
+
 
 
 
@@ -206,17 +297,17 @@ def main():
     parser.add_argument(
         "--neighborhood",
         type=int,
-        default=15,
+        default=10,
         metavar="N",
-        help="Neighborhood size used for local peak detection. Larger values produce fewer peaks. Default: 15."
+        help="Neighborhood size used for local peak detection. Larger values produce fewer peaks. Default: 10."
     )
 
     parser.add_argument(
         "--min_db",
         type=float,
-        default=-40,
+        default=-50,
         metavar="DB",
-        help="Minimum peak magnitude (dB) for the fingerprint. Higher values produce fewer peaks. Default: -40."
+        help="Minimum peak magnitude (dB) for the fingerprint. Higher values produce fewer peaks. Default: -50."
     )
 
     args = parser.parse_args()
