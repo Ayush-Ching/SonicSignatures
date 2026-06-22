@@ -8,7 +8,6 @@ from db import (
     insert_hashes,
 )
 
-# Folder containing all your songs
 SONGS_DIR = Path("songs")
 
 
@@ -31,7 +30,6 @@ def build_database():
 
         print(f"Processing: {song_name}")
 
-        # Generate spectral peaks
         peaks = generate_fingerprint(
             song_path,
             window_size=2048,
@@ -40,17 +38,14 @@ def build_database():
             min_db=-40,
         )
 
-        # Generate hashes
         hashes = generate_hashes(
             peaks,
             fan_value=5,
             max_time_delta=5.0,
         )
 
-        # Insert song
         song_id = insert_song(conn, song_name)
 
-        # Insert hashes
         insert_hashes(conn, song_id, hashes)
 
         print(f"  Peaks : {len(peaks)}")
