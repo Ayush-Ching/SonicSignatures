@@ -47,7 +47,7 @@ def plot_dft(song_path, db=False, output_file=None):
     plt.close()
 
 
-def plot_spectrogram(song_path, window_size=20000, max_freq=3500, output_file=None):
+def plot_spectrogram(song_path, window_size=2048, max_freq=3500, output_file=None):
     print("Plotting spectrogram...")
 
     signal, sr = librosa.load(song_path, sr=None, mono=True)
@@ -152,7 +152,7 @@ def plot_fingerprint(song_path, window_size=20000, max_freq=3500, neighborhood_s
     plt.close()
 
 
-def generate_fingerprint(song_path, window_size=2048, max_freq=3500, neighborhood_size=15, min_db=-40):
+def generate_fingerprint(song_path, window_size=2048, max_freq=3500, neighborhood_size=10, min_db=-50):
 
     signal_data, sr = librosa.load(song_path, sr=None, mono=True)
 

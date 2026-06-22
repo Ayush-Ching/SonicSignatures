@@ -9,6 +9,7 @@ import sqlite3
 # conn.close()
 
 
+
 # conn = sqlite3.connect("database/fingerprints.db")
 # cursor = conn.cursor()
 
@@ -20,10 +21,22 @@ import sqlite3
 
 # conn.close()
 
-conn = sqlite3.connect("database/fingerprints.db")
-cursor = conn.cursor()
 
-cursor.execute("PRAGMA table_info(fingerprints)")
-print(cursor.fetchall())
+
+# conn = sqlite3.connect("database/fingerprints.db")
+# cursor = conn.cursor()
+
+# cursor.execute("PRAGMA table_info(fingerprints)")
+# print(cursor.fetchall())
+
+# conn.close()
+
+
+
+conn = sqlite3.connect("database/single.db")
+cur = conn.cursor()
+
+print(cur.execute("PRAGMA table_info(fingerprints);").fetchall())
+print(cur.execute("PRAGMA table_info(songs);").fetchall())
 
 conn.close()

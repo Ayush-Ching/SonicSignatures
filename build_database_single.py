@@ -34,8 +34,8 @@ def build_database():
             song_path,
             window_size=2048,
             max_freq=3500,
-            neighborhood_size=15,
-            min_db=-40,
+            neighborhood_size=10,
+            min_db=-50,
         )
 
         hashes = generate_single_hashes(peaks)
