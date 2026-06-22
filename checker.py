@@ -9,13 +9,21 @@ import sqlite3
 # conn.close()
 
 
+# conn = sqlite3.connect("database/fingerprints.db")
+# cursor = conn.cursor()
+
+# cursor.execute("SELECT * FROM songs")
+# print(cursor.fetchall())
+
+# cursor.execute("SELECT COUNT(*) FROM fingerprints")
+# print(cursor.fetchone())
+
+# conn.close()
+
 conn = sqlite3.connect("database/fingerprints.db")
 cursor = conn.cursor()
 
-cursor.execute("SELECT * FROM songs")
+cursor.execute("PRAGMA table_info(fingerprints)")
 print(cursor.fetchall())
-
-cursor.execute("SELECT COUNT(*) FROM fingerprints")
-print(cursor.fetchone())
 
 conn.close()
