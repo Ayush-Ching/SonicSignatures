@@ -1,0 +1,21 @@
+import sqlite3
+
+# conn = sqlite3.connect("database/fingerprints.db")
+# cursor = conn.cursor()
+
+# cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+# print(cursor.fetchall())
+
+# conn.close()
+
+
+conn = sqlite3.connect("database/fingerprints.db")
+cursor = conn.cursor()
+
+cursor.execute("SELECT * FROM songs")
+print(cursor.fetchall())
+
+cursor.execute("SELECT COUNT(*) FROM fingerprints")
+print(cursor.fetchone())
+
+conn.close()
