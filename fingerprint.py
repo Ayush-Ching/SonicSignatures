@@ -196,6 +196,9 @@ def generate_fingerprint(song_path, window_size=2048, max_freq=3500, neighborhoo
 
 
 def generate_hashes(peaks, fan_value=5, max_time_delta=5.0):
+    """
+    Generate hases by pairing peaks.
+    """
 
     hashes = []
 
@@ -236,6 +239,28 @@ def generate_hashes(peaks, fan_value=5, max_time_delta=5.0):
 
     return hashes
 
+
+def generate_single_hashes(peaks):
+    """
+    Generate fingerprints using individual peaks only.
+    """
+
+    hashes = []
+
+    peaks.sort(key=lambda p: p[1])
+
+    for frequency, peak_time in peaks:
+
+        hash_value = str(int(frequency))
+
+        hashes.append(
+            (
+                hash_value,
+                peak_time
+            )
+        )
+
+    return hashes
 
 
 
