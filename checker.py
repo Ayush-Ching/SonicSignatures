@@ -53,10 +53,34 @@ import sqlite3
 
 
 
-conn = sqlite3.connect("database/single.db")
+# conn = sqlite3.connect("database/single.db")
+# cursor = conn.cursor()
+
+# cursor.execute("PRAGMA index_list(fingerprints)")
+# print(cursor.fetchall())
+
+# conn.close()
+
+
+
+conn = sqlite3.connect("database/fingerprints.db")
 cursor = conn.cursor()
 
-cursor.execute("PRAGMA index_list(fingerprints)")
-print(cursor.fetchall())
+cursor.execute("""
+SELECT name
+FROM sqlite_master
+WHERE type='table'
+ORDER BY name;
+""")
+
+tables = [row[0] for row in cursor.fetchall()]
+
+print("Tables:")
+for table in tables:
+    print(f"\n{table}")
+
+    cursor.execute(f"PRAGMA table_info({table})")
+    for column in cursor.fetchall():
+        print(column)
 
 conn.close()

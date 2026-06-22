@@ -1,47 +1,141 @@
+import sqlite3
+from pathlib import Path
+
 import streamlit as st
-import math
-import time
 
-st.set_page_config(layout="wide")
+DATABASE = "database/fingerprints.db"
+IMAGE_DIR = Path("fingerprint_images")
 
-st.markdown("""
-<style>
-body, .stApp {
-    background: black;
-}
-pre {
-    color: #00ff99;
-    font-family: Consolas, monospace;
-    font-size: 12px;
-    line-height: 11px;
-    text-align: center;
-}
-</style>
-""", unsafe_allow_html=True)
 
-frame = st.empty()
+st.set_page_config(
+    page_title="Sonic Signatures",
+    page_icon="🎵",
+    layout="wide",
+)
 
-chars = " .:-=+*#%@"
+st.title("🎵 Sonic Signatures")
+st.caption("EE200 : Signals, Systems and Networks Project")
 
-while True:
-    output = "So jao bhai.<br>"
 
-    t = time.time() * 2
+@st.cache_data
+def load_library():
 
-    for y in range(169):
-        for x in range(169):
-            v = (
-                math.sin(x * 0.15 + t)
-                + math.cos(y * 0.18 + t * 1.3)
-                + math.sin((x + y) * 0.08 + t * 0.7)
-            )
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
 
-            idx = int((v + 3) / 6 * (len(chars) - 1))
-            output += chars[idx]
+    cursor.execute("""
+        SELECT
+            s.name,
+            COUNT(f.hash)
+        FROM songs s
+        LEFT JOIN fingerprints f
+            ON s.id = f.song_id
+        GROUP BY s.id
+        ORDER BY s.name
+    """)
 
-        output += "\n"
-    
-    output += "<br>So ja ladle."
+    songs = cursor.fetchall()
 
-    frame.markdown(f"<pre>{output}</pre>", unsafe_allow_html=True)
-    time.sleep(0.03)
+    conn.close()
+
+    return songs
+
+
+songs = load_library()
+
+tab1, tab2, tab3 = st.tabs(
+    [
+        "📚 Library",
+        "🔍 Song Recognition",
+        "📊 Project Statistics",
+    ]
+)
+
+
+# ==========================================================
+# Library
+# ==========================================================
+
+with tab1:
+
+    st.subheader("Song Library")
+
+    cols = st.columns(4)
+
+    for i, (name, hashes) in enumerate(songs):
+
+        image_path = IMAGE_DIR / f"{name}.png"
+
+        with cols[i % 4]:
+
+            if image_path.exists():
+                st.image(
+                    str(image_path),
+                    use_container_width=True,
+                )
+            else:
+                st.image(
+                    "https://placehold.co/600x400?text=No+Image",
+                    use_container_width=True,
+                )
+
+            st.markdown(f"**{name}**")
+            st.caption(f"{hashes:,} hashes")
+
+
+# ==========================================================
+# Song Recognition
+# ==========================================================
+
+with tab2:
+
+    st.subheader("Recognize a Song")
+
+    uploaded_file = st.file_uploader(
+        "Upload an audio clip",
+        type=["mp3", "wav", "flac", "ogg", "m4a"],
+    )
+
+    if uploaded_file is not None:
+
+        st.success(f"Loaded **{uploaded_file.name}**")
+
+        st.info(
+            "Recognition algorithm will be connected here."
+        )
+
+        if st.button("Recognize Song"):
+            st.warning("Recognition not implemented yet.")
+
+
+# ==========================================================
+# Statistics
+# ==========================================================
+
+with tab3:
+
+    st.subheader("Database Statistics")
+
+    total_songs = len(songs)
+    total_hashes = sum(hashes for _, hashes in songs)
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.metric("Songs", total_songs)
+
+    with col2:
+        st.metric("Fingerprint Hashes", f"{total_hashes:,}")
+
+    st.divider()
+
+    st.subheader("Library")
+
+    st.dataframe(
+        {
+            "Song": [s for s, _ in songs],
+            "Hashes": [h for _, h in songs],
+        },
+        use_container_width=True,
+        hide_index=True,
+    )
