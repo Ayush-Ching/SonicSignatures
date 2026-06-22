@@ -2,20 +2,22 @@ from collections import Counter
 import sqlite3
 import sys
 
-from fingerprint import generate_fingerprint
+from fingerprint import generate_fingerprint, generate_single_hashes
 
 DATABASE = "database/single.db"
 
 
 def find_song(audio_file):
 
-    query_hashes = generate_fingerprint(
+    peaks = generate_fingerprint(
         str(audio_file),
         window_size=2048,
         max_freq=3500,
         neighborhood_size=10,
         min_db=-50,
     )
+
+    query_hashes = generate_single_hashes(peaks)
 
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
@@ -36,9 +38,7 @@ def find_song(audio_file):
         matches = cursor.fetchall()
 
         for song_id, db_anchor_time in matches:
-
             offset = round(db_anchor_time - query_anchor_time, 2)
-
             votes[(song_id, offset)] += 1
 
     if not votes:
@@ -60,10 +60,8 @@ def find_song(audio_file):
         conn.close()
         return
 
-    song_name = result[0]
-
     print("\n========== MATCH ==========")
-    print(f"Song   : {song_name}")
+    print(f"Song   : {result[0]}")
     print(f"Votes  : {best_votes}")
     print(f"Offset : {best_offset:.2f} s")
 

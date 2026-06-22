@@ -33,10 +33,30 @@ import sqlite3
 
 
 
-conn = sqlite3.connect("database/single.db")
-cur = conn.cursor()
+# conn = sqlite3.connect("database/single.db")
+# cur = conn.cursor()
 
-print(cur.execute("PRAGMA table_info(fingerprints);").fetchall())
-print(cur.execute("PRAGMA table_info(songs);").fetchall())
+# print(cur.execute("PRAGMA table_info(fingerprints);").fetchall())
+# print(cur.execute("PRAGMA table_info(songs);").fetchall())
+
+# conn.close()
+
+
+
+# conn = sqlite3.connect("database/single.db")
+# cursor = conn.cursor()
+
+# cursor.execute("SELECT COUNT(*) FROM fingerprints")
+# print(cursor.fetchone())
+
+# conn.close()
+
+
+
+conn = sqlite3.connect("database/single.db")
+cursor = conn.cursor()
+
+cursor.execute("PRAGMA index_list(fingerprints)")
+print(cursor.fetchall())
 
 conn.close()
