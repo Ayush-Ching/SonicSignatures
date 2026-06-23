@@ -55,7 +55,7 @@ def plot_spectrogram(song_path, window_size=2048, max_freq=3500, output_file=Non
 
     plt.figure(figsize=(12, 5))
 
-    Pxx, freqs, bins, im = plt.specgram(
+    plt.specgram(
         signal,
         NFFT=window_size,
         Fs=sr,
@@ -63,15 +63,12 @@ def plot_spectrogram(song_path, window_size=2048, max_freq=3500, output_file=Non
         cmap="magma"
     )
 
-    im.set_clim(-100, 0)
-
     plt.ylim(0, max_freq)
 
     plt.xlabel("Time (s)")
     plt.ylabel("Frequency (Hz)")
     plt.title(f"Spectrogram of {song_name}\nWindow Size = {window_size}")
-    plt.colorbar(im, label="Intensity (dB)")
-    # plt.colorbar(label="Intensity (dB)")
+    plt.colorbar(label="Intensity (dB)")
     plt.tight_layout()
 
     if output_file:
@@ -83,7 +80,7 @@ def plot_spectrogram(song_path, window_size=2048, max_freq=3500, output_file=Non
     plt.close()
 
 
-def plot_fingerprint(song_path, window_size=20000, max_freq=3500, neighborhood_size=10, min_db=-50, output_file=None):
+def plot_fingerprint(song_path, window_size=2048, max_freq=3500, neighborhood_size=10, min_db=-50, output_file=None):
 
     print("Generating fingerprint...")
 
@@ -124,8 +121,6 @@ def plot_fingerprint(song_path, window_size=20000, max_freq=3500, neighborhood_s
         aspect="auto",
         extent=[times[0], times[-1], frequencies[0], frequencies[-1]],
         cmap="magma",
-        vmin=-100,
-        vmax=0
     )
 
     plt.scatter(

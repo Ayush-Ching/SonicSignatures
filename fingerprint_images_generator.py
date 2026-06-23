@@ -6,7 +6,6 @@ import numpy as np
 from scipy import signal
 from scipy.ndimage import maximum_filter
 
-from fingerprint import generate_fingerprint
 
 SONGS_DIR = Path("songs")
 OUTPUT_DIR = Path("fingerprint_images")
@@ -19,28 +18,16 @@ SUPPORTED_EXTENSIONS = {
     ".flac",
     ".ogg",
     ".m4a",
-    ".aac",
 }
 
 
-def save_fingerprint_image(
+def generate_fingerprint_plot(
     song_path,
-    output_path,
     window_size=2048,
     max_freq=3500,
     neighborhood_size=10,
     min_db=-50,
 ):
-    """
-    Generate a fingerprint image with:
-      - no title
-      - no axes
-      - no ticks
-      - no labels
-      - no whitespace
-      - only spectrogram + fingerprint dots
-    """
-
     signal_data, sr = librosa.load(song_path, sr=None, mono=True)
 
     frequencies, times, Sxx = signal.spectrogram(
@@ -69,7 +56,7 @@ def save_fingerprint_image(
 
     y, x = np.where(peaks)
 
-    fig = plt.figure(figsize=(8, 4), frameon=False)
+    fig = plt.figure(figsize=(12, 5), frameon=False)
     ax = plt.Axes(fig, [0, 0, 1, 1])
     ax.set_axis_off()
     fig.add_axes(ax)
@@ -78,30 +65,22 @@ def save_fingerprint_image(
         Sxx_db,
         origin="lower",
         aspect="auto",
-        extent=[
-            times[0],
-            times[-1],
-            frequencies[0],
-            frequencies[-1],
-        ],
+        extent=[times[0], times[-1], frequencies[0], frequencies[-1]],
         cmap="magma",
-        vmin=-100,
-        vmax=0,
     )
 
     ax.scatter(
         times[x],
         frequencies[y],
-        s=8,
+        s=20,
         facecolors="none",
         edgecolors="cyan",
-        linewidths=0.5,
+        linewidths=0.8,
     )
 
-    ax.set_xlim(times[0], times[-1])
-    ax.set_ylim(0, max_freq)
+    output_path = OUTPUT_DIR / f"{Path(song_path).stem}.png"
 
-    plt.savefig(
+    fig.savefig(
         output_path,
         dpi=300,
         bbox_inches="tight",
@@ -110,13 +89,15 @@ def save_fingerprint_image(
 
     plt.close(fig)
 
+    print(f"✓ Saved {output_path.name}")
+
 
 def main():
-    songs = sorted(
-        p
-        for p in SONGS_DIR.iterdir()
-        if p.suffix.lower() in SUPPORTED_EXTENSIONS
-    )
+    songs = [
+        f
+        for f in SONGS_DIR.iterdir()
+        if f.suffix.lower() in SUPPORTED_EXTENSIONS
+    ]
 
     if not songs:
         print("No songs found.")
@@ -125,20 +106,10 @@ def main():
     print(f"Found {len(songs)} songs.\n")
 
     for song in songs:
-        output_file = OUTPUT_DIR / f"{song.stem}.png"
+        print(f"Generating fingerprint for {song.name}...")
+        generate_fingerprint_plot(song)
 
-        print(f"Generating {output_file.name}...")
-
-        save_fingerprint_image(
-            song,
-            output_file,
-            window_size=2048,
-            max_freq=3500,
-            neighborhood_size=10,
-            min_db=-50,
-        )
-
-    print("\nDone.")
+    print("\nDone!")
 
 
 if __name__ == "__main__":
