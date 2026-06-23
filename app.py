@@ -1,6 +1,7 @@
 import sqlite3
 from pathlib import Path
 import streamlit as st
+import pandas as pd
 import tempfile
 import os
 
@@ -50,7 +51,7 @@ tab1, tab2, tab3 = st.tabs(
     [
         "📚 Library",
         "🔍 Song Recognition",
-        "📊 Project Statistics",
+        "📊 Batch Upload",
     ]
 )
 
@@ -156,33 +157,69 @@ with tab2:
                     )
 
 # ==========================================================
-# Statistics
+# Batch Recognition
 # ==========================================================
 
 with tab3:
 
-    st.subheader("Database Statistics")
+    st.subheader("Batch Song Recognition")
 
-    total_songs = len(songs)
-    total_hashes = sum(hashes for _, hashes in songs)
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.metric("Songs", total_songs)
-
-    with col2:
-        st.metric("Fingerprint Hashes", f"{total_hashes:,}")
-
-    st.divider()
-
-    st.subheader("Library")
-
-    st.dataframe(
-        {
-            "Song": [s for s, _ in songs],
-            "Hashes": [h for _, h in songs],
-        },
-        use_container_width=True,
-        hide_index=True,
+    uploaded_files = st.file_uploader(
+        "Upload multiple audio clips",
+        type=["mp3", "wav", "flac", "ogg", "m4a"],
+        accept_multiple_files=True,
     )
+
+    if uploaded_files:
+
+        st.success(f"{len(uploaded_files)} file(s) selected.")
+
+        if st.button("Try Batch", type="primary"):
+
+            results = []
+
+            progress = st.progress(0.0)
+
+            for i, uploaded_file in enumerate(uploaded_files):
+
+                suffix = Path(uploaded_file.name).suffix
+
+                with tempfile.NamedTemporaryFile(
+                    delete=False,
+                    suffix=suffix,
+                ) as tmp:
+
+                    tmp.write(uploaded_file.read())
+                    temp_path = tmp.name
+
+                result = find_song(temp_path)
+
+                os.remove(temp_path)
+
+                if result is None:
+
+                    results.append({
+                        "Query": uploaded_file.name,
+                        "Matched Song": "No Match",
+                        "Votes": "-",
+                        "Offset (s)": "-",
+                    })
+
+                else:
+
+                    results.append({
+                        "Query": uploaded_file.name,
+                        "Matched Song": result["song"],
+                        "Votes": result["votes"],
+                        "Offset (s)": f"{result['offset']:.2f}",
+                    })
+
+                progress.progress((i + 1) / len(uploaded_files))
+
+            st.success("Batch recognition complete.")
+
+            st.dataframe(
+                pd.DataFrame(results),
+                use_container_width=True,
+                hide_index=True,
+            )
