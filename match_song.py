@@ -49,7 +49,7 @@ def find_song(audio_file):
     if not votes:
         print("No matching song found.")
         conn.close()
-        return
+        return None
 
     (best_song_id, best_offset), best_votes = votes.most_common(1)[0]
 
@@ -63,16 +63,17 @@ def find_song(audio_file):
     if result is None:
         print("Song ID not found.")
         conn.close()
-        return
+        return None
 
     song_name = result[0]
 
-    print("\n========== MATCH ==========")
-    print(f"Song   : {song_name}")
-    print(f"Votes  : {best_votes}")
-    print(f"Offset : {best_offset:.2f} s")
-
     conn.close()
+
+    return {
+        "song": song_name,
+        "votes": best_votes,
+        "offset": best_offset,
+    }
 
 
 if __name__ == "__main__":
@@ -82,4 +83,12 @@ if __name__ == "__main__":
         print("python match_song.py <audio_file>")
         sys.exit(1)
 
-    find_song(sys.argv[1])
+    result = find_song(sys.argv[1])
+
+    if result is None:
+        print("No matching song found.")
+    else:
+        print("\n========== MATCH ==========")
+        print(f"Song   : {result['song']}")
+        print(f"Votes  : {result['votes']}")
+        print(f"Offset : {result['offset']:.2f} s")

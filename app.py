@@ -1,7 +1,10 @@
 import sqlite3
 from pathlib import Path
-
 import streamlit as st
+import tempfile
+import os
+
+from match_song import find_song
 
 DATABASE = "database/fingerprints.db"
 IMAGE_DIR = Path("fingerprint_images")
@@ -98,15 +101,59 @@ with tab2:
 
     if uploaded_file is not None:
 
-        st.success(f"Loaded **{uploaded_file.name}**")
+        st.audio(uploaded_file)
 
-        st.info(
-            "Recognition algorithm will be connected here."
-        )
+        if st.button("Try", type="primary"):
 
-        if st.button("Recognize Song"):
-            st.warning("Recognition not implemented yet.")
+            suffix = Path(uploaded_file.name).suffix
 
+            with tempfile.NamedTemporaryFile(
+                delete=False,
+                suffix=suffix,
+            ) as tmp:
+
+                tmp.write(uploaded_file.read())
+                temp_path = tmp.name
+
+            with st.spinner("Searching database..."):
+
+                result = find_song(temp_path)
+
+            os.remove(temp_path)
+
+            if result is None:
+
+                st.error("No matching song found.")
+
+            else:
+
+                st.success("Match Found!")
+
+                col1, col2 = st.columns([1, 2])
+
+                with col1:
+
+                    image_path = IMAGE_DIR / f"{result['song']}.png"
+
+                    if image_path.exists():
+                        st.image(
+                            str(image_path),
+                            use_container_width=True,
+                        )
+
+                with col2:
+
+                    st.markdown(f"### 🎵 {result['song']}")
+
+                    st.metric(
+                        "Votes",
+                        result["votes"],
+                    )
+
+                    st.metric(
+                        "Time Offset",
+                        f"{result['offset']:.2f} s",
+                    )
 
 # ==========================================================
 # Statistics
