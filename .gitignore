@@ -5,3 +5,4 @@ env/
 ENV/
 *.zip
 __pycache__
+songs/
